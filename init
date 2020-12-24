@@ -1,0 +1,95 @@
+#!/bin/bash
+
+exitOnError(){
+  # $1 must be set to $?
+  status=$1
+  message=$2
+  [ "$message" != "" ] || message="Error!"
+  if [ "$status" != 0 ]; then
+    printf "%s (status %s)\n" "$message" "$status"
+    exit "$status"
+  fi
+}
+
+exitIfNotIn(){
+  # $1 is the name of the variable to check - not the variable itself
+  # $2 is a string of comma separated possible values
+  var="$(eval echo "\$$1")"
+  for value in ${2//,/ }
+  do
+    if [ "${var,,}" = "${value,,}" ]; then
+      return 0
+    fi
+  done
+  printf "Environment variable %s=%s must be one of the following: " "$1" "$var"
+  for value in ${2//,/ }
+  do
+    printf "%s " "$value"
+  done
+  printf "\n"
+  exit 1
+}
+
+printf "========================================================\n"
+printf "========================================================\n"
+printf "                    _         _                    _ _ \n"
+printf "  _   _  ___  _   _| |_ _   _| |__   ___        __| | |\n"
+printf " | | | |/ _ \| | | | __| | | | '_ \ / _ \_____ / _\` | |\n"
+printf " | |_| | (_) | |_| | |_| |_| | |_) |  __|_____| (_| | |\n"
+printf "  \__, |\___/ \__,_|\__|\__,_|_.__/ \___|      \__,_|_|\n"
+printf "  |___/                                                \n"
+printf "                                                        \n"
+printf "========================================================\n"
+printf "========================================================\n"
+printf "========= by github.com/qnimbus - B. van Wetten ========\n\n"
+
+# Set UID/PID of user that youtube-dl will be run as
+YOUTUBEDLPGID=${PGID:-1000}
+YOUTUBEDLPUID=${PUID:-1000}
+
+# Check to see if group/user already exist, if so, delete
+EXISTINGGROUPNAME=$(getent group "$YOUTUBEDLPGID" | cut -d ':' -f 1)
+EXISTINGUSERNAME=$(getent passwd "$YOUTUBEDLPUID" | cut -d ':' -f 1)
+if [[ -n "$EXISTINGGROUPNAME" ]]; then
+    groupdel -f "$EXISTINGGROUPNAME"
+fi
+if [[ -n "$EXISTINGUSERNAME" ]]; then
+    userdel -f "$EXISTINGUSERNAME"
+fi
+
+exitIfNotIn LOG "yes,no,true,false"
+
+# Create user/group
+mkdir -p /home/dockeruser
+adduser --system --disabled-password --uid "$YOUTUBEDLPUID" --home /home/dockeruser dockeruser
+addgroup --gid "$YOUTUBEDLPGID" dockeruser
+chown "$YOUTUBEDLPUID":"$YOUTUBEDLPGID" /downloads
+chown "$YOUTUBEDLPUID":"$YOUTUBEDLPGID" /home/dockeruser
+chown "$YOUTUBEDLPUID":"$YOUTUBEDLPGID" /usr/local/bin/youtube-dl
+chmod u+s /usr/local/bin/youtube-dl
+HOME=/home/dockeruser
+export HOME
+
+YTDL_VERSION=$(youtube-dl --version)
+PYTHON_VERSION=$(python3 --version 2>&1 | cut -d " " -f 2)
+FFMPEG_VERSION=$(ffmpeg -version | head -n 1 | grep -oE 'version [0-9]+\.[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+printf "youtube-dl version: %s\n" "${YTDL_VERSION}"
+printf "python version: %s\n" "${PYTHON_VERSION}"
+printf "ffmpeg version: %s\n\n" "${FFMPEG_VERSION}"
+
+# Test if '/downloads' is writable by user
+su-exec dockeruser:dockeruser test -w "/downloads"
+exitOnError $? "/downloads is not writable for dockeruser:dockeruser (${YOUTUBEDLPUID}:${YOUTUBEDLPGID}), please fix its ownership and/or permissions"
+
+# Run youtube-dlc with remainder of command line arguments
+if [ "${LOG,,}" = "yes" ] || [ "${LOG,,}" = "true" ]; then
+  su-exec dockeruser:dockeruser /usr/local/bin/youtube-dl "$@" 2>&1 | tee /downloads/log.txt
+else
+  su-exec dockeruser:dockeruser /usr/local/bin/youtube-dl "$@"
+fi
+
+status=$?
+
+printf "\n========================================================\n"
+printf "youtube-dl exited with status %s\n" "$status"
+printf "========================================================\n"
