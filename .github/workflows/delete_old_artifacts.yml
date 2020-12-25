@@ -1,4 +1,4 @@
-name: 'Delete old artifacts'
+name: 'Delete old artifacts (manual)'
 on:
   workflow_dispatch:
     inputs:
@@ -6,16 +6,12 @@ on:
         description: 'Prune artifacts older than'
         required: true
         default: '7 days'
-  schedule:
-    - cron: '0 * * * *' # every hour
 
 jobs:
   delete-artifacts:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "expire-in: ${{ github.event.inputs.expireIn }}"
       - uses: kolpav/purge-artifacts-action@v1
         with:
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           expire-in: ${{ github.event.inputs.expireIn }}

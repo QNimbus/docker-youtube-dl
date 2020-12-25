@@ -83,7 +83,10 @@ exitOnError $? "/downloads is not writable for dockeruser:dockeruser (${YOUTUBED
 
 # Run youtube-dlc with remainder of command line arguments
 if [ "${LOG,,}" = "yes" ] || [ "${LOG,,}" = "true" ]; then
-  su-exec dockeruser:dockeruser /usr/local/bin/youtube-dl "$@" 2>&1 | tee /downloads/log.txt
+  # Create log directory
+  su-exec dockeruser:dockeruser mkdir -p /downloads/log
+  
+  su-exec dockeruser:dockeruser /usr/local/bin/youtube-dl "$@" 2>> >(tee -a /downloads/log/youtube-dl.err) >> >(tee -a /downloads/log/youtube-dl.log)
 else
   su-exec dockeruser:dockeruser /usr/local/bin/youtube-dl "$@"
 fi

@@ -1,6 +1,6 @@
 # qnimbus/youtube-dl <!-- omit in toc -->
 
-![Linting](https://github.com/qnimbus/docker-youtube-dl/workflows/Linting/badge.svg?style=for-the-badge&branch=latest) ![Docker](https://github.com/qnimbus/docker-youtube-dl/workflows/Docker/badge.svg?style=for-the-badge&branch=latest) ![Publish Docker image](https://github.com/QNimbus/docker-youtube-dl/workflows/Publish%20Docker%20image/badge.svg?style=for-the-badge)
+![Linting](https://github.com/qnimbus/docker-youtube-dl/workflows/Linting/badge.svg?style=for-the-badge) ![Docker](https://github.com/qnimbus/docker-youtube-dl/workflows/Docker/badge.svg?style=for-the-badge) ![Publish Docker image](https://github.com/QNimbus/docker-youtube-dl/workflows/Publish%20Docker%20image/badge.svg?style=for-the-badge)
 
 `yt-dl` - download videos from various online video platforms.
 
@@ -9,7 +9,9 @@
 - [Quick Start](#quick-start)
 - [Environment variables](#environment-variables)
 - [Shell access](#shell-access)
+- [Configuration](#configuration)
 - [Support or Contact](#support-or-contact)
+- [Test](#test)
 - [Troubleshooting](#troubleshooting)
 
 ## Quick Start
@@ -24,7 +26,7 @@ alias yt-dl='docker run \
               --name youtube-dl \
               -e PGID=$(id -g) \
               -e PUID=$(id -u) \
-              -v "$(pwd)":/downloads:rw \
+              -v "$(pwd)"/downloads:/downloads:rw \
               qnimbus/youtube-dl
 ```
 
@@ -34,9 +36,11 @@ When you run `youtube-dl` (e.g: `yt-dl <video_url>`) it will download the video 
 
 ## Environment variables
 
-| Environment variable | Default | Possible values      | Description                                               |
-| -------------------- | ------- | -------------------- | --------------------------------------------------------- |
-| `LOG`                | `yes`   | yes, no, true, false | Writes youtube-dl console output to `/downloads/log.txt`. |
+| Environment variable | Default    | Possible values      | Description                                               |
+| -------------------- | ---------- | -------------------- | --------------------------------------------------------- |
+| `LOG`                | `yes`      | yes, no, true, false | Writes stderr and stdout to `/downloads/log` folder. |
+| `PGID`               | `$(id -g)` | valid GID            | The group id (GID) used to run the `youtube-dl` as.       |
+| `PUID`               | `$(id -u)` | valid UID            | The user id (UID) used to run the `youtube-dl` as.        |
 
 ## Shell access
 
@@ -54,14 +58,42 @@ To start a fresh container with a shell (instead of `youtube-dl`) execute the fo
 docker run --rm -ti --entrypoint=/bin/bash qnimbus/youtube-dl
 ```
 
+## Configuration
+
+Visit the official [`youtube-dl`](https://github.com/ytdl-org/youtube-dl/blob/master/README.md) documentation for [command line and configuration](https://github.com/ytdl-org/youtube-dl/blob/master/README.md#options) options.
+
+### Configuration file
+
+To prevent having to specify many command line arguments every time you run `youtube-dl` you may wish to have an external configuation file. This configuration file needs to be exposed to the Docker container using a volume mount. In the example below the `youtube-dl.conf` file is assumed to reside in the present work directory (`pwd`). It is mount as a read-only file in the `youtube-dl` Docker container.
+
+```bash
+docker run \
+        --rm -i \
+        -e PGID=$(id -g) \
+        -e PUID=$(id -u) \
+        -v "$(pwd)"/downloads:/downloads:rw \
+        -v "$(pwd)"/youtube-dl.conf:/etc/youtube-dl.conf:ro \
+        qnimbus/youtube-dl
+```
+
+If you need help creating a `youtube-dl.conf` configuration file you can view the [official `youtube-dl` documentation](https://github.com/ytdl-org/youtube-dl/blob/master/README.md#configuration).
+
 ## Support or Contact
 
 Having troubles with the container or have questions? Please [create a new issue](https://github.com/qnimbus/docker-youtube-dl/issues).
 
-## Troubleshooting
+## Test
 
-When running the docker commands from a Windows Git Bash shell (MSYS) you may need to prepend the `MSYS_NO_PATHCONV=1` environment variable to the commands, like so:
+You can test the container by downloading a small sample video from Youtube like so:
 
 ```bash
-MSYS_NO_PATHCONV=1 docker run --rm -it -v ${PWD}/downloads:/downloads -e LOG=YES qnimbus/youtube-dl --version
+docker run --rm -it -v ${PWD}/downloads:/downloads qnimbus/youtube-dl https://www.youtube.com/watch?v=EngW7tLk6R8
+```
+
+## Troubleshooting
+
+When running the docker commands from a Windows Git Bash shell (MSYS) you may need to prepend the `MSYS_NO_PATHCONV=1` environment variable to the commands like so:
+
+```bash
+MSYS_NO_PATHCONV=1 docker run --rm -it -v ${PWD}/downloads:/downloads qnimbus/youtube-dl --version
 ```
