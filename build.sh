@@ -8,10 +8,11 @@ export DOCKER_CLI_EXPERIMENTAL="enabled"
 # Build latest
 docker build -t ${IMAGE}:${VERSION} --compress --no-cache --platform linux/amd64 . || exit 1
 
+# Get current youtube-dl version number
 build_version=$(docker run --rm ${IMAGE}:${VERSION} | grep -oP '(?<=youtube-dl version: )[\d\.]+$' || exit 1)
 
 if [ -z "${build_version}" ]; then
-    echo "Failed when trying to get youtube-dl version in latest container :("
+    echo "Failed when trying to get youtube-dl version from latest container :("
     exit 1
 fi
 
