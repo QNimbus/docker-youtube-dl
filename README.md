@@ -2,11 +2,10 @@
 
 ![Linting](https://github.com/qnimbus/docker-youtube-dl/workflows/Linting/badge.svg?style=for-the-badge&branch=latest) ![Docker](https://github.com/qnimbus/docker-youtube-dl/workflows/Docker/badge.svg?style=for-the-badge&branch=latest) ![Publish Docker image](https://github.com/QNimbus/docker-youtube-dl/workflows/Publish%20Docker%20image/badge.svg?style=for-the-badge)
 
-`yt-dl` - download videos many online video platforms
+`yt-dl` - download videos from various online video platforms.
 
-## Table of Contents
+## Table of Contents <!-- omit in toc -->
 
-- [Table of Contents](#table-of-contents)
 - [Quick Start](#quick-start)
 - [Environment variables](#environment-variables)
 - [Shell access](#shell-access)
@@ -21,7 +20,7 @@ It is suggested to configure an alias as follows (and place into your `.bash_ali
 
 ```bash
 alias yt-dl='docker run \
-              --rm -i \
+              --rm -it \
               --name youtube-dl \
               -e PGID=$(id -g) \
               -e PUID=$(id -u) \
