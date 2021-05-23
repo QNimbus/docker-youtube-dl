@@ -10,6 +10,7 @@
 - [Environment variables](#environment-variables)
 - [Shell access](#shell-access)
 - [Configuration](#configuration)
+  - [Configuration file](#configuration-file)
 - [Support or Contact](#support-or-contact)
 - [Test](#test)
 - [Troubleshooting](#troubleshooting)
@@ -18,21 +19,29 @@
 
 **NOTE**: The docker command provided in this quick start is just an example. You will likely need to add additional parameters depending on how you would like to use `youtube-dl`.
 
-It is suggested to configure an alias as follows (and place into your `.bash_aliases` file):
+It is suggested to configure an shell function as follows (and append to your `~/.profile` file):
 
 ```bash
-alias yt-dl='docker run \
-              --rm -it \
-              --name youtube-dl \
-              -e PGID=$(id -g) \
-              -e PUID=$(id -u) \
-              -v "$(pwd)"/downloads:/downloads:rw \
-              qnimbus/youtube-dl
+function yt-dl() {
+    docker run \
+        --rm -it \
+        --name youtube-dl \
+        -e PGID=$(id -g) \
+        -e PUID=$(id -u) \
+        -v "$(pwd)"/downloads:/downloads:rw \
+        qnimbus/youtube-dl $@
+}
 ```
 
-**HANDY HINT:** After updating your `.bash_aliases` file, run `source ~/.bash_aliases` to make your changes live!
+Or using `docker-compose`:
 
-When you run `youtube-dl` (e.g: `yt-dl <video_url>`) it will download the video file to your current working directory.
+```bash
+PGID=$(id -g) PUID=$(id -u) docker-compose run --rm youtube-dl
+```
+
+**HANDY HINT:** After updating your `~/.profile` file, run `source ~/.profile` to make your changes live! Alternatively you can logout of your shell and log back in.
+
+When you run `youtube-dl` (e.g: `yt-dl <video_url>`) it will download the video file to the `./downloads` folder in your current working directory.
 
 ## Environment variables
 

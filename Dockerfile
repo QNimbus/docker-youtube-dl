@@ -4,7 +4,7 @@ FROM alpine:${ALPINE_VERSION}
 
 ARG BUILD_DATE
 ARG VCS_REF
-ARG YOUTUBE_DL_OVERWRITE
+ARG YOUTUBE_DL_OVERWRITE=latest
 LABEL \
     org.opencontainers.image.authors="bas@vanwetten.com" \
     org.opencontainers.image.created=$BUILD_DATE \
@@ -20,7 +20,8 @@ HEALTHCHECK --interval=10m --timeout=10s --retries=1 CMD [ "$(wget -qO- https://
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8 \
     LANGUAGE=en_US:en \
-    LOG=yes
+    LOG=yes \
+    YOUTUBE_DL_VERSION=$YOUTUBE_DL_OVERWRITE
 
 RUN apk add --no-cache bash
 
@@ -37,12 +38,12 @@ RUN apk add -q --progress --update --no-cache --virtual deps \
         gnupg
     
 RUN ln -s /usr/bin/python3 /usr/local/bin/python && \
-    LATEST="${YOUTUBE_DL_OVERWRITE:-latest}" && \
-    wget -q "https://yt-dl.org/downloads/${LATEST}/youtube-dl" -O /usr/local/bin/youtube-dl && \
-    wget -q "https://yt-dl.org/downloads/${LATEST}/youtube-dl.sig" -O /tmp/youtube-dl.sig && \
-    gpg --keyserver keyserver.ubuntu.com --recv-keys 'ED7F5BF46B3BBED81C87368E2C393E0F18A9236D' && \
+    wget -q "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/youtube-dl" -O /usr/local/bin/youtube-dl && \
+    wget -q "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/youtube-dl.sig" -O /tmp/youtube-dl.sig && \
+    wget -qO- "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/SHA2-256SUMS" | head -n 1 | cut -d " " -f 1 && \
+    gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 'ED7F5BF46B3BBED81C87368E2C393E0F18A9236D' && \
     gpg --verify /tmp/youtube-dl.sig /usr/local/bin/youtube-dl && \
-    SHA256=$(wget -qO- "https://yt-dl.org/downloads/${LATEST}/SHA2-256SUMS" | head -n 1 | cut -d " " -f 1) && \
+    SHA256=$(wget -qO- "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/SHA2-256SUMS" | head -n 1 | cut -d " " -f 1) && \
     [ "$(sha256sum /usr/local/bin/youtube-dl | cut -d ' ' -f 1)" = "${SHA256}" ]
 
 COPY init /init

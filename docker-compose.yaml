@@ -1,0 +1,22 @@
+---
+  version: '3.7'
+
+  volumes: {}
+
+  services:
+
+    youtube-dl:
+      build:
+        context: ./
+        dockerfile: Dockerfile
+        args: {}
+      image: qnimbus/youtube-dl
+      container_name: youtube-dl
+      restart: always
+      environment: []
+      ports: []
+      volumes:
+        - type: bind
+          source: ./downloads
+          target: /download
+          read_only: false
