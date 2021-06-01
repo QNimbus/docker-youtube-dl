@@ -18,5 +18,5 @@
       volumes:
         - type: bind
           source: ./downloads
-          target: /download
+          target: /downloads
           read_only: false
