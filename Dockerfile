@@ -5,6 +5,7 @@ FROM alpine:${ALPINE_VERSION}
 ARG BUILD_DATE
 ARG VCS_REF
 ARG YOUTUBE_DL_OVERWRITE=latest
+ARG YOUTUBE_DLP_OVERWRITE=latest
 LABEL \
     org.opencontainers.image.authors="bas@vanwetten.com" \
     org.opencontainers.image.created=$BUILD_DATE \
@@ -21,7 +22,8 @@ ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8 \
     LANGUAGE=en_US:en \
     LOG=yes \
-    YOUTUBE_DL_VERSION=$YOUTUBE_DL_OVERWRITE
+    YOUTUBE_DL_VERSION=$YOUTUBE_DL_OVERWRITE \
+    YOUTUBE_DLP_VERSION=$YOUTUBE_DLP_OVERWRITE
 
 RUN apk add --no-cache bash
 
@@ -35,18 +37,27 @@ RUN apk add -q --progress --update --no-cache \
 
 RUN apk add -q --progress --update --no-cache --virtual deps \
         wget \
+        py3-pip \
         gnupg
-    
+
+# yt-dl
+# RUN ln -s /usr/bin/python3 /usr/local/bin/python && \
+#     wget -q "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/youtube-dl" -O /usr/local/bin/youtube-dl && \
+#     wget -q "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/youtube-dl.sig" -O /tmp/youtube-dl.sig && \
+#     wget -qO- "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/SHA2-256SUMS" | head -n 1 | cut -d " " -f 1 && \
+#     gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 'ED7F5BF46B3BBED81C87368E2C393E0F18A9236D' && \
+#     gpg --verify /tmp/youtube-dl.sig /usr/local/bin/youtube-dl && \
+#     SHA256=$(wget -qO- "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/SHA2-256SUMS" | head -n 1 | cut -d " " -f 1) && \
+#     [ "$(sha256sum /usr/local/bin/youtube-dl | cut -d ' ' -f 1)" = "${SHA256}" ]
+
+# yt-dlp
 RUN ln -s /usr/bin/python3 /usr/local/bin/python && \
-    wget -q "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/youtube-dl" -O /usr/local/bin/youtube-dl && \
-    wget -q "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/youtube-dl.sig" -O /tmp/youtube-dl.sig && \
-    wget -qO- "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/SHA2-256SUMS" | head -n 1 | cut -d " " -f 1 && \
-    gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 'ED7F5BF46B3BBED81C87368E2C393E0F18A9236D' && \
-    gpg --verify /tmp/youtube-dl.sig /usr/local/bin/youtube-dl && \
-    SHA256=$(wget -qO- "https://yt-dl.org/downloads/${YOUTUBE_DL_VERSION}/SHA2-256SUMS" | head -n 1 | cut -d " " -f 1) && \
-    [ "$(sha256sum /usr/local/bin/youtube-dl | cut -d ' ' -f 1)" = "${SHA256}" ]
+      wget -q "https://github.com/yt-dlp/yt-dlp/releases/${YOUTUBE_DLP_VERSION}/download/yt-dlp" -O /usr/local/bin/youtube-dl
 
 COPY init /init
+
+# Install additional/optional dependencies
+RUN pip install --no-cache-dir websockets==10.1
 
 RUN apk del deps && \
     rm -rf /var/cache/apk/* /tmp/youtube-dl.sig && \
